@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Cluster Visualization</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3f37c9;
+            --accent: #f72585;
+            --accent-dark: #b5179e;
+            --dark: #1d1e2c;
+            --darker: #12131f;
+            --darkest: #0a0a12;
+            --light: #f8f9fa;
+            --light-gray: #e9ecef;
+            --gray: #adb5bd;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--darker), var(--dark));
+            color: var(--light);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background: rgba(29, 30, 44, 0.95);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            gap: 20px;
+            border-bottom: 1px solid rgba(67, 97, 238, 0.3);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            font-size: 2.2rem;
+            color: var(--accent);
+            background: rgba(247, 37, 133, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title-text h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to right, #4cc9f0, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title-text p {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 3px;
+        }
+
+        .controls-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 10px 15px;
+        }
+
+        .control-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .search-box {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            overflow: hidden;
+            min-width: 280px;
+            height: 42px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            padding: 10px 15px;
+            color: var(--light);
+            width: 100%;
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        .search-box input::placeholder {
+            color: rgba(173, 181, 189, 0.7);
+        }
+
+        .search-box button {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 0 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+
+        .search-box button:hover {
+            background: var(--primary-dark);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--light);
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .filter-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .filter-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-inputs input {
+            width: 80px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 8px 12px;
+            color: var(--light);
+            outline: none;
+        }
+
+        .filter-inputs label {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .action-btn {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 5px;
+        }
+
+        .zoom-btn {
+            background: transparent;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .zoom-level {
+            padding: 0 12px;
+            font-weight: 600;
+            min-width: 50px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .info-panel {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            display: flex;
+            gap: 15px;
+        }
+
+        .info-panel span {
+            color: #4cc9f0;
+            font-weight: 600;
+        }
+
+        main {
+            display: flex;
+            height: calc(100vh - 110px);
+        }
+
+        #sidebar {
+            width: 300px;
+            background: rgba(29, 30, 44, 0.8);
+            border-right: 1px solid rgba(67, 97, 238, 0.2);
+            padding: 20px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .sidebar-section h3 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cluster-info {
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .cluster-info:hover {
+            background: rgba(67, 97, 238, 0.2);
+            border-color: var(--primary);
+        }
+
+        .cluster-info.active {
+            background: rgba(67, 97, 238, 0.25);
+            border-color: var(--accent);
+        }
+
+        .cluster-info h4 {
+            color: #4cc9f0;
+            margin-bottom: 5px;
+            font-size: 1.05rem;
+        }
+
+        .cluster-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .similarity-input {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .similarity-input label {
+            font-size: 0.9rem;
+            color: var(--light);
+        }
+
+        .similarity-input input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--light);
+            outline: none;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 极4px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:极 {
+            transform: translateX(26px);
+        }
+
+        #visualization-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(rgba(18, 19, 31, 0.9), rgba(18, 19, 31, 0.95)), 
+                        radial-gradient(circle at top right, rgba(67, 97, 238, 0.1), transparent 500px);
+        }
+
+        #viewport {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        #viewport.dragging {
+            cursor: grabbing;
+        }
+
+        #bookshelf {
+            position: relative;
+            transition: transform 0.1s ease-out;
+            will-change: transform;
+        }
+
+        .cluster-row {
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 140px;
+            background: linear-gradient(to right, rgba(30, 30, 60, 0.6), rgba(20, 20, 40, 0.8));
+            border-bottom: 1px solid rgba(100, 100, 200, 0.2);
+            padding: 5px 0;
+        }
+
+        .cluster-header {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 150px;
+            height: 100%;
+            background: rgba(0, 0, 30, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            border-right: 2px solid var(--primary);
+            z-index: 2;
+            text-align: center;
+        }
+
+        .cluster-id {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .cluster-size {
+            font-size: 0.85rem;
+            color: #b5179e;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        .images-container {
+            position: absolute;
+            left极: 150px;
+            top: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            overflow: hidden;
+        }
+
+        .face-img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin: 0 8px;
+        }
+
+        .face-img:hover {
+            transform: scale(1.15);
+            border-color: var(--accent);
+            box-shadow: 0 6px 12px rgba(247, 37, 133, 0.5);
+            z-index: 5;
+        }
+
+        .face-img.selected {
+            border-color: #4cc9f0;
+            box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.5);
+        }
+
+        #tooltip {
+            position: fixed;
+            background: rgba(10, 10, 30, 0.95);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 15px;
+            max-width: 350px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 200;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+        }
+
+        #tooltip.visible {
+            opacity: 1;
+        }
+
+        .tooltip-header {
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tooltip-content {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        .tooltip-label {
+            color: #4cc9f0;
+            font-weight: 600;
+        }
+
+        .tooltip-value {
+            color: var(--light);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-word;
+        }
+
+        .similarity-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+
+        .similarity-fill {
+            height: 100%;
+            background: linear-gradient(to right, #f72585, #4361ee);
+            border-radius: 4极;
+        }
+
+        .loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.1rem;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 35px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 200;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .loading-indicator i {
+            animation: pulse 1.5s infinite;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            font-size: 0.85rem;
+            color: var(--gray);
+            z-index: 100;
+            border-top: 1px solid rgba(67, 97, 238, 0.2);
+        }
+
+        #notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--dark);
+            color: var(--light);
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            border-left: 4px solid var(--accent);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 300;
+        }
+
+        #notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            #sidebar {
+                width: 250px;
+            }
+        }
+
+        /* Animation for new content */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .cluster-row {
+            animation: fadeIn 0.4s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-user-friends"></i>
+            </div>
+            <div class="title-text">
+                <h1>Face Cluster Visualization</h1>
+                <p>Interactive exploration of clustered facial images</p>
+            </div>
+        </div>
+        
+        <div class="controls-container">
+            <div class="control-group">
+                <div class="control-label">Search Faces</div>
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Search by ID, cluster or metadata...">
+                    <button id="search-btn"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">Filter Clusters</div>
+                <div class="filter-controls">
+                    <button class="filter-btn active" data-filter="all" id="filter-all">All</button>
+                    <button class="filter-btn" data-filter="small" id="filter-small">Small</button>
+                    <button class="filter-btn" data-filter="medium" id="filter-medium">Medium</button>
+                    <button class="filter-btn" data-filter="large" id="filter-large">Large</button>
+                    <button class="action-btn" id="merge-btn"><i class="fas fa-object-group"></i> Merge</button>
+                    <button class="action-btn" id="split-btn"><i class="fas fa-cut"></i> Split</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">Zoom Controls</div>
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoom-out" title="Zoom Out">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <div class="zoom-level" id="zoom-level">100%</div>
+                    <button class="zoom-btn" id="zoom-in" title="Zoom In">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <div>Showing: <span id="visible-count">0</span> images</div>
+                <div>Clusters: <span id="cluster-count">0</span></div>
+                <div>Total: <span id="total-images">0</span></div>
+            </div>
+        </div>
+    </header>
+    
+    <main>
+        <aside id="sidebar">
+            <div class="sidebar-section">
+                <h3><i class="fas fa-database"></i> Data Source</h3>
+                <div class="similarity-input">
+                    <label for="api-endpoint">API Endpoint:</label>
+                    <input type="text" id="api-endpoint" value="http://localhost:5000/api" disabled>
+                </div>
+                
+                <div class="similarity-input">
+                    <label for="sim-threshold">Similarity Threshold:</label>
+                    <input type="range" id="sim-threshold" min="0.5" max="1.0" step="0.01" value="0.85">
+                    <div class="info-panel" style="margin-top: 10px;">
+                        <span id="threshold-value">85%</span> similarity
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3><i class="fas fa-shield-alt"></i> Security Settings</h3>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                    <span>Require Authentication</span>
+                    <label class="switch">
+                        <input type="checkbox" id="auth-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span>Enable Encryption</span>
+                    <label class="switch">
+                        <input type="checkbox" id="encrypt-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <button class="action-btn" id="refresh-btn" style="margin-top: 15px; width: 100%;">
+                    <i class="fas fa-sync-alt"></i> Refresh Data
+                </button>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3><i class="fas fa-tasks"></i> Cluster Operations</h3>
+                <div id="clusters-list">
+                    <!-- Cluster info will be populated here -->
+                </div>
+            </div>
+        </aside>
+        
+        <section id="visualization-area">
+            <div id="viewport">
+                <div id="bookshelf"></div>
+            </div>
+            
+            <div id="tooltip">
+                <div class="tooltip-header">
+                    <i class="fas fa-user"></i>
+                    <span>Face Details</span>
+                </div>
+                <div class="tooltip-content">
+                    <span class="tooltip-label">ID:</span>
+                    <span class="tooltip-value" id="tooltip-id">-</span>
+                    
+                    <span class="tooltip-label">Cluster:</span>
+                    <span class="tooltip-value" id="tooltip-cluster">-</span>
+                    
+                    <span class="tooltip-label">Path:</span>
+                    <span class="tooltip-value" id="tooltip-path">-</span>
+                    
+                    <span class="tooltip-label">Left Similarity:</span>
+                    <div>
+                        <span class="tooltip-value" id="tooltip-left">-</span>
+                        <div class="similarity-bar"><div class="similarity-fill" id="similarity-left-bar"></div></div>
+                    </div>
+                    
+                    <span class="tooltip-label">Right Similarity:</span>
+                    <div>
+                        <span class="tooltip-value" id="tooltip-right">-</span>
+                        <div class="similarity-bar"><div class="similarity-fill" id="similarity-right-bar"></div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="loading-indicator" id="loading-indicator">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <span>Loading visible clusters...</span>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <p>Interactive Face Cluster Visualization &copy; 2023 | Use mouse to pan and zoom | Hover over images for details | Select images to merge or split clusters</p>
+    </footer>
+    
+    <div id="notification">
+        <i class="fas fa-check-circle"></i> Operation completed successfully!
+    </div>
+    
+    <script>
+        // Configuration
+        const CONFIG = {
+            ROW_HEIGHT: 140,
+            IMAGE_WIDTH: 120,
+            IMAGE_SPACING: 10,
+            CLUSTER_HEADER_WIDTH: 150,
+            ZOOM_STEP: 0.2,
+            BUFFER_AREA: 3.0,
+            ROWS_PER_BATCH: 8,
+            SMALL_CLUSTER: 5,
+            MEDIUM_CLUSTER: 20,
+            API_BASE: 'http://localhost:5000/api',
+            WS_URL: 'http://localhost:5000/socket.io/EventSource?EIO=4&transport=websocket',
+        };
+
+        // State management
+        const state = {
+            scale: 1.0,
+            position: { x: 0, y: 0 },
+            isDragging: false,
+            dragStart: { x: 0, y: 0 },
+            clusters: [],
+            visibleClusters: new Set(),
+            lastRenderTime: 0,
+            filter: 'all',
+            minSize: 1,
+            maxSize: 1000,
+            searchQuery: '',
+            totalClusters: 0,
+            totalImages: 0,
+            selectedImages: new Set(),
+            similarityThreshold: 0.85,
+            websocket: null,
+            currentPage: 1,
+            perPage: 20
+        };
+
+        // DOM Elements
+        const dom = {
+            viewport: document.getElementById('viewport'),
+            bookshelf: document.getElementById('bookshelf'),
+            tooltip: document.getElementById('tooltip'),
+            zoomLevel: document.getElementById('zoom-level'),
+            visibleCount: document.getElementById('visible-count'),
+            clusterCount: document.getElementById('cluster-count'),
+            totalImages: document.getElementById('total-images'),
+            loadingIndicator: document.getElementById('loading-indicator'),
+            searchInput: document.getElementById('search-input'),
+            searchBtn: document.getElementById('search-btn'),
+            minSize: document.getElementById('min-size'),
+            maxSize: document.getElementById('max-size'),
+            notification: document.getElementById('notification'),
+            threshold: document.getElementById('sim-threshold'),
+            thresholdValue: document.getElementById('threshold-value'),
+            mergeBtn: document.getElementById('merge-btn'),
+            splitBtn: document.getElementById('split-btn'),
+            authToggle: document.getElementById('auth-toggle'),
+            encryptToggle: document.getElementById('encrypt-toggle'),
+            refreshBtn: document.getElementById('refresh-btn'),
+            clustersList: document.getElementById('clusters-list'),
+            endpoint: document.getElementById('api-endpoint')
+        };
+
+        // Initialize the visualization
+        function init() {
+            dom.endpoint.value = CONFIG.API_BASE;
+            setupWebSocket();
+            loadData();
+            setupEventListeners();
+            // updateMetrics();
+            resizeViewport();
+            // startRenderLoop();
+            updateSimilarityThreshold();
+        }
+
+        // Setup WebSocket connection
+        function setupWebSocket() {
+            state.websocket = new WebSocket(CONFIG.WS_URL);
+            
+            state.websocket.onopen = () => {
+                console.log('WebSocket connected');
+                showNotification('Connected to real-time updates');
+            };
+            
+            state.websocket.onmessage = (event) => {
+                const data = JSON.parse(event.data.slice(1));
+                
+                handleRealTimeUpdate(data);
+            };
+            
+            state.websocket.onclose = () => {
+                console.log('WebSocket disconnected');
+                showNotification('Disconnected from real-time updates', false);
+                // Attempt to reconnect after 5 seconds
+                setTimeout(setupWebSocket, 5000);
+            };
+            
+            state.websocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                showNotification('WebSocket error occurred', false);
+            };
+        }
+
+        // Handle real-time updates
+        function handleRealTimeUpdate(update) {
+            switch (update.type) {
+                case 'cluster_merged':
+                    showNotification(`Clusters merged into new cluster: ${update.new_cluster_id}`);
+                    loadData();
+                    break;
+                case 'cluster_split':
+                    showNotification(`Cluster split: new cluster ${update.new_cluster_id} created`);
+                    loadData();
+                    break;
+                case 'cluster_updated':
+                    // Update specific cluster
+                    updateCluster(update.cluster);
+                    break;
+                case 'status':
+                    if (update.message) {
+                        showNotification(update.message);
+                    }
+                    break;
+                default:
+                    console.log('Unknown update type:', update.type);
+            }
+        }
+
+        // Update a cluster in the UI
+        function updateCluster(updatedCluster) {
+            // Find and update the cluster in our state
+            const index = state.clusters.findIndex(c => c.id === updatedCluster.id);
+            if (index !== -1) {
+                state.clusters[index] = updatedCluster;
+                renderVisibleClusters();
+                updateClusterList();
+            }
+        }
+
+        // Load data from API
+        function loadData() {
+            showLoading();
+            
+            fetch(`${CONFIG.API_BASE}/clusters?page=${state.currentPage}&per_page=${state.perPage}`)
+                .then(response => response.json())
+                .then(data => {
+                    state.clusters = data.clusters;
+                    state.totalClusters = data.total_clusters;
+                    state.totalImages = state.clusters.reduce((sum, c) => sum + c.size, 0);
+                    
+                    // Update bookshelf height
+                    const bookshelfHeight = data.clusters.length * CONFIG.ROW_HEIGHT;
+                    dom.bookshelf.style.height = `${bookshelfHeight}px`;
+                    
+                    // Update metrics
+                    dom.clusterCount.textContent = data.total_clusters;
+                    dom.totalImages.textContent = state.totalImages;
+                    
+                    // Re-render
+                    state.visibleClusters.clear();
+                    dom.bookshelf.innerHTML = '';
+                    renderVisibleClusters();
+                    updateClusterList();
+                    hideLoading();
+                })
+                .catch(error => {
+                    console.error('Error loading data:', error);
+                    showNotification('Failed to load cluster data', false);
+                    hideLoading();
+                });
+        }
+
+        // Update the cluster list in the sidebar
+        function updateClusterList() {
+            dom.clustersList.innerHTML = '';
+            
+            // Show top 10 clusters by size
+            const topClusters = [...state.clusters]
+                .sort((a, b) => b.size - a.size)
+                .slice(0, 10);
+            
+            topClusters.forEach(cluster => {
+                const clusterEl = document.createElement('div');
+                clusterEl.className = 'cluster-info';
+                clusterEl.innerHTML = `
+                    <h4>${cluster.id}</h4>
+                    <div class="cluster-meta">
+                        <span>Size: ${cluster.size} faces</span>
+                        <span>Avg. Similarity: ${Math.round(cluster.avg_similarity * 100)}%</span>
+                    </div>
+                `;
+                dom.clustersList.appendChild(clusterEl);
+            });
+        }
+
+        // Apply filters and search
+        function applyFilters() {
+            showLoading();
+            state.visibleClusters.clear();
+            dom.bookshelf.innerHTML = '';
+            
+            const params = new URLSearchParams({
+                min_size: state.minSize,
+                max_size: state.maxSize,
+                search: state.searchQuery,
+                page: state.currentPage,
+                per_page: state.perPage,
+                filter: state.filter,
+                similarity_threshold: state.similarityThreshold
+            });
+            
+            fetch(`${CONFIG.API_BASE}/clusters?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    state.clusters = data.clusters;
+                    
+                    // Update positions
+                    let currentY = 0;
+                    state.clusters.forEach(cluster => {
+                        cluster.position = { y: currentY };
+                        currentY += CONFIG.ROW_HEIGHT;
+                    });
+                    
+                    // Update bookshelf size
+                    dom.bookshelf.style.height = `${currentY}px`;
+                    
+                    // Update metrics
+                    dom.clusterCount.textContent = data.total_clusters;
+                    dom.totalImages.textContent = data.clusters.reduce((sum, c) => sum + c.size, 0);
+                    
+                    // hideLoading();
+                    renderVisibleClusters();
+                    updateClusterList();
+                    hideLoading();                    
+                })
+                .catch(error => {
+                    console.error('Error applying filters:', error);
+                    showNotification('Failed to apply filters', false);
+                    hideLoading();
+                });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Zoom controls
+            document.getElementById('zoom-in').addEventListener('click', () => zoom(1));
+            document.getElementById('zoom-out').addEventListener('click', () => zoom(-1));
+            
+            // Panning
+            dom.viewport.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', endDrag);
+            
+            // Mouse wheel zooming
+            dom.viewport.addEventListener('wheel', handleWheel, { passive: false });
+            
+            // Window resize handling
+            window.addEventListener('resize', resizeViewport);
+            
+            // Search functionality
+            dom.searchBtn.addEventListener('click', () => {
+                state.searchQuery = dom.searchInput.value.trim();
+                applyFilters();
+            });
+            
+            dom.searchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    state.searchQuery = dom.searchInput.value.trim();
+                    applyFilters();
+                }
+            });
+            
+            // Filter buttons
+            document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn[data-filter]').forEach(b => 
+                        b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.filter = btn.dataset.filter;
+                    applyFilters();
+                });
+            });
+            
+            // Similarity threshold
+            dom.threshold.addEventListener('input', updateSimilarityThreshold);
+            
+            // Cluster operations
+            dom.mergeBtn.addEventListener('click', mergeClusters);
+            dom.splitBtn.addEventListener('click', splitCluster);
+            
+            // Security toggles
+            dom.authToggle.addEventListener('change', updateSecuritySettings);
+            dom.encryptToggle.addEventListener('change', updateSecuritySettings);
+            
+            // Refresh button
+            dom.refreshBtn.addEventListener('click', loadData);
+        }
+
+        // Update similarity threshold display
+        function updateSimilarityThreshold() {
+            state.similarityThreshold = parseFloat(dom.threshold.value);
+            dom.thresholdValue.textContent = `${Math.round(state.similarityThreshold * 100)}%`;
+            applyFilters();
+        }
+
+        // Show notification
+        function showNotification(message, isSuccess = true) {
+            dom.notification.innerHTML = `
+                <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> 
+                ${message}
+            `;
+            dom.notification.style.borderLeftColor = isSuccess ? 'var(--success)' : 'var(--error)';
+            dom.notification.classList.add('show');
+            
+            setTimeout(() => {
+                dom.notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Merge selected clusters
+        function mergeClusters() {
+            if (state.selectedImages.size < 2) {
+                showNotification("Please select at least 2 images to merge", false);
+                return;
+            }
+            
+            showLoading();
+            
+            // Extract cluster IDs from selected images
+            const clusterIds = new Set();
+            state.selectedImages.forEach(imgId => {
+                const clusterId = imgId.split('_')[0];
+                clusterIds.add(clusterId);
+            });
+            
+            if (clusterIds.size < 2) {
+                showNotification("Please select images from at least 2 different clusters", false);
+                hideLoading();
+                return;
+            }
+            
+            fetch(`${CONFIG.API_BASE}/merge_clusters`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cluster_ids: Array.from(clusterIds)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification(`Successfully merged into new cluster ${data.new_cluster_id}`);
+                state.selectedImages.clear();
+                setTimeout(loadData, 500); // Wait a bit before reloading
+            })
+            .catch(error => {
+                console.error('Error merging clusters:', error);
+                showNotification('Failed to merge clusters', false);
+            })
+            .finally(hideLoading);
+        }
+
+        // Split selected clusters
+        function splitCluster() {
+            if (state.selectedImages.size === 0) {
+                showNotification("Please select images to split into a new cluster", false);
+                return;
+            }
+            
+            showLoading();
+            
+            // We need to know which cluster these images belong to
+            const selectedCluster = getCommonCluster();
+            if (!selectedCluster) {
+                showNotification("Selected images must be from the same cluster", false);
+                hideLoading();
+                return;
+            }
+            
+            const imageIds = Array.from(state.selectedImages).map(id => id.split('_')[1]);
+            
+            fetch(`${CONFIG.API_BASE}/split_cluster`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cluster_id: selectedCluster,
+                    image_ids: imageIds
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification(`Split into new cluster: ${data.new_cluster_id}`);
+                state.selectedImages.clear();
+                setTimeout(loadData, 500); // Wait a bit before reloading
+            })
+            .catch(error => {
+                console.error('Error splitting cluster:', error);
+                showNotification('Failed to split cluster', false);
+            })
+            .finally(hideLoading);
+        }
+
+        // Get common cluster for selected images
+        function getCommonCluster() {
+            if (state.selectedImages.size === 0) return null;
+            
+            let commonCluster = null;
+            for (const imgId of state.selectedImages) {
+                const [clusterId] = imgId.split('_');
+                if (!commonCluster) {
+                    commonCluster = clusterId;
+                } else if (commonCluster !== clusterId) {
+                    return null; // Images from different clusters
+                }
+            }
+            return commonCluster;
+        }
+
+        // Update security settings
+        function updateSecuritySettings() {
+            const requireAuth = dom.authToggle.checked;
+            const enableEncrypt = dom.encryptToggle.checked;
+            
+            showNotification(`Security settings updated: ${requireAuth ? 'Auth ON' : 'Auth OFF'}, ${enableEncrypt ? 'Encryption ON' : 'Encryption OFF'}`);
+        }
+
+        // Handle zooming
+        function zoom(direction) {
+            const zoomAmount = direction > 0 ? 
+                (1 + CONFIG.ZOOM_STEP) : 
+                (1 - CONFIG.ZOOM_STEP);
+                
+            state.scale = Math.max(0.3, Math.min(3, state.scale * zoomAmount));
+            dom.zoomLevel.textContent = `${Math.round(state.scale * 100)}%`;
+            
+            updateBookshelfTransform();
+        }
+
+        // Handle mouse wheel for zoom
+        function handleWheel(e) {
+            e.preventDefault();
+            zoom(e.deltaY > 0 ? -1 : 1);
+        }
+
+        // Start dragging
+        function startDrag(e) {
+            state.isDragging = true;
+            state.dragStart.x = e.clientX - state.position.x;
+            state.dragStart.y = e.clientY - state.position.y;
+            dom.viewport.classList.add('dragging');
+        }
+
+        // Drag movement
+        function drag(e) {
+            if (!state.isDragging) return;
+            
+            state.position.x = e.clientX - state.dragStart.x;
+            state.position.y = e.clientY - state.dragStart.y;
+            
+            updateBookshelfTransform();
+        }
+
+        // End dragging
+        function endDrag() {
+            state.isDragging = false;
+            dom.viewport.classList.remove('dragging');
+        }
+
+        // Update bookshelf transform
+        function updateBookshelfTransform() {
+            dom.bookshelf.style.transform = `translate(${state.position.x}px, ${state.position.y}px) scale(${state.scale})`;
+            dom.bookshelf.style.transformOrigin = 'top left';
+        }
+
+        // Resize viewport
+        function resizeViewport() {
+            const headerHeight = document.querySelector('header').offsetHeight;
+            dom.viewport.style.width = `${window.innerWidth - document.getElementById('sidebar').offsetWidth}px`;
+            dom.viewport.style.height = `${window.innerHeight - headerHeight}px`;
+        }
+
+        // Start the render loop
+        function startRender极() {
+            setInterval(renderVisibleClusters, 100);
+        }
+
+        // Render clusters that are currently visible
+        function renderVisibleClusters() {
+            hideLoading();
+            
+            // Determine visible area
+            const viewportRect = dom.viewport.getBoundingClientRect();
+            const visibleTop = -state.position.y / state.scale;
+            const visibleBottom = visibleTop + (viewportRect.height / state.scale);
+            const visibleLeft = -state.position.x / state.scale;
+            const visibleRight = visibleLeft + (viewportRect.width / state.scale);
+            
+            // Calculate buffer area
+            const buffer = viewportRect.height * CONFIG.BUFFER_AREA / state.scale;
+            const renderTop = Math.max(0, visibleTop - buffer);
+            const renderBottom = visibleBottom + buffer;
+            
+            // Find clusters that should be visible
+            const clustersToRender = new Set();
+            let visibleImageCount = 0;
+            for (let i = 0; i < state.clusters.length; i++) {
+                const cluster = state.clusters[i];
+                const clusterTop = i*CONFIG.ROW_HEIGHT/state.scale;
+                const clusterBottom = clusterTop + CONFIG.ROW_HEIGHT/state.scale;
+                
+                if (clusterTop >= renderTop && clusterBottom <= renderBottom) {
+                    // Calculate how many images in this cluster are visible
+                    const imagesInCluster = Math.min( Math.ceil((visibleRight-visibleLeft)/(CONFIG.ROW_HEIGHT*state.scale)), cluster.size);
+                    clustersToRender.add([i,imagesInCluster]);
+                    visibleImageCount += imagesInCluster;
+                }
+            }
+            
+            // Update visible count
+            dom.visibleCount.textContent = visibleImageCount;
+            
+            // Remove clusters that are no longer visible
+            for (const clusterIndex of state.visibleClusters) {
+                for (const [clusterIndex1,imagesInCluster1] of clustersToRender) {
+                    if (clusterIndex = clusterIndex1) {
+                        const row = document.getElementById(`cluster-${clusterIndex}`);
+                        if (row) row.remove();
+                        state.visibleClusters.delete(clusterIndex);
+                    }
+                }
+            }
+            
+            // Add new clusters that need rendering
+            for (const [clusterIndex,imagesInCluster] of clustersToRender) {
+                if (!state.visibleClusters.has(clusterIndex)) {
+                    createClusterRow(state.clusters[clusterIndex], clusterIndex, imagesInCluster);
+                    state.visibleClusters.add(clusterIndex);
+                }
+            }
+        }
+
+        // Create a cluster row
+        function createClusterRow(cluster, index, imagesInCluster) {
+            const row = document.createElement('div');
+            row.className = 'cluster-row';
+            row.id = `cluster-${index}`;
+            row.style.top = '0px';// `${cluster.position.y}px`;
+            row.style.height = `${CONFIG.ROW_HEIGHT}px`;
+            row.style.width = '100%';
+            
+            // Cluster header
+            const header = document.createElement('div');
+            header.className = 'cluster-header';
+            header.innerHTML = `
+                <div class="cluster-id">${cluster.id}</div>
+                <div class="cluster-size">${cluster.size} faces</div>
+            `;
+            row.appendChild(header);
+            
+            // Images container
+            const imagesContainer = document.createElement('div');
+            imagesContainer.className = 'images-container';
+            
+            // Create placeholder images (actual images will load asynchronously)
+            const imagesToShow = imagesInCluster; //Math.min(imagesInCluster, cluster.size);
+            for (let i = 0; i < imagesToShow; i++) {
+                const img = document.createElement('div');
+                img.className = 'face-img-placeholder';
+                img.style.width = `${CONFIG.IMAGE_WIDTH}px`;
+                img.style.height = `${CONFIG.IMAGE_WIDTH}px`;
+                img.style.background = 'rgba(255, 255, 255, 0.1)';
+                img.style.borderRadius = '4px';
+                imagesContainer.appendChild(img);
+            }
+            
+            row.appendChild(imagesContainer);
+            dom.bookshelf.appendChild(row);
+            
+            // Load actual images asynchronously
+            loadClusterImages(cluster.id, imagesContainer,imagesInCluster);
+        }
+
+        // Load images for a cluster
+        function loadClusterImages(clusterId, container,imagesInCluster = 15) {
+            fetch(`${CONFIG.API_BASE}/cluster/${clusterId}?page=1&per_page=${imagesInCluster}`)
+                .then(response => response.json())
+                .then(data => {
+                    container.innerHTML = '';
+                    data.images.forEach(image => {
+                        const img = document.createElement('img');
+                        img.className = 'face-img';
+                        img.src = image.path;
+                        img.alt = `Face ${image.id} in cluster ${clusterId}`;
+                        
+                        // Set up tooltip data
+                        img.dataset.id = `${clusterId}_${image.id}`;
+                        img.dataset.clusterId = clusterId;
+                        img.dataset.path = image.path;
+                        img.dataset.leftSimilarity = image.left_similarity;
+                        img.dataset.rightSimilarity = image.right_similarity;
+                        
+                        // Add event listeners
+                        img.addEventListener('mouseenter', showTooltip);
+                        img.addEventListener('mouseleave', hideTooltip);
+                        img.addEventListener('click', toggleSelection);
+                        
+                        container.appendChild(img);
+                    });
+                })
+                .catch(error => {
+                    console.error(`Error loading images for cluster ${clusterId}:`, error);
+                    showNotification(`Failed to load images for cluster ${clusterId}`, false);
+                });
+        }
+
+        // Toggle image selection
+        function toggleSelection(e) {
+            const img = e.target;
+            const imgId = img.dataset.id;
+            
+            if (state.selectedImages.has(imgId)) {
+                img.classList.remove('selected');
+                state.selectedImages.delete(imgId);
+            } else {
+                img.classList.add('selected');
+                state.selectedImages.add(imgId);
+            }
+        }
+
+        // Show tooltip for face image
+        function showTooltip(e) {
+            const img = e.target;
+            
+            // Update tooltip content
+            document.getElementById('tooltip-id').textContent = img.dataset.id;
+            document.getElementById('tooltip-cluster').textContent = img.dataset.clusterId;
+            document.getElementById('tooltip-path').textContent = img.dataset.path;
+            
+            // Update similarity values
+            const leftSimilarity = img.dataset.leftSimilarity;
+            const rightSimilarity = img.dataset.rightSimilarity;
+            
+            document.getElementById('tooltip-left').textContent = leftSimilarity;
+            document.getElementById('tooltip-right').textContent = rightSimilarity;
+            
+            // Update similarity bars
+            if (leftSimilarity && leftSimilarity !== 'null') {
+                const leftValue = parseFloat(leftSimilarity);
+                document.getElementById('similarity-left-bar').style.width = `${leftValue * 100}%`;
+            } else {
+                document.getElementById('similarity-left-bar').style.width = '0%';
+            }
+            
+            if (rightSimilarity && rightSimilarity !== 'null') {
+                const rightValue = parseFloat(rightSimilarity);
+                document.getElementById('similarity-right-bar').style.width = `${rightValue * 100}%`;
+            } else {
+                document.getElementById('similarity-right-bar').style.width = '0%';
+            }
+            
+            // Position tooltip near cursor
+            dom.tooltip.style.left = `${e.pageX + 15}px`;
+            dom.tooltip.style.top = `${e.pageY + 15}px`;
+            dom.tooltip.classList.add('visible');
+        }
+
+        // Hide tooltip
+        function hideTooltip() {
+            dom.tooltip.classList.remove('visible');
+        }
+
+        // Show loading indicator
+        function showLoading() {
+            dom.loadingIndicator.style.display = 'flex';
+        }
+
+        // Hide loading indicator
+        function hideLoading() {
+            dom.loadingIndicator.style.display = 'none';
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

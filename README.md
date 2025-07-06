@@ -1,2 +1,2 @@
-# FaceClusteringVisualization
-Visualize Face Clusters
+# Faces Clustering Visualization
+Visualize Faces Clusters
